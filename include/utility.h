@@ -5,11 +5,14 @@
 #include <ros/ros.h>
 
 #include <std_msgs/Header.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 #include <opencv/cv.h>
 
@@ -62,10 +65,17 @@ public:
 
     std::string robot_id;
 
+    //Topics
     string pointCloudTopic;
     string imuTopic;
     string odomTopic;
     string gpsTopic;
+
+    //Frames
+    string lidarFrame;
+    string baselinkFrame;
+    string odometryFrame;
+    string mapFrame;
 
     // GPS Settings
     bool useImuHeadingInitialization;
@@ -80,6 +90,8 @@ public:
     // Velodyne Sensor Configuration: Velodyne
     int N_SCAN;
     int Horizon_SCAN;
+    string timeField;
+    int downsampleRate;
 
     // IMU
     float imuAccNoise;
@@ -120,7 +132,8 @@ public:
     float surroundingKeyframeSearchRadius;
     
     // Loop closure
-    bool loopClosureEnableFlag;
+    bool  loopClosureEnableFlag;
+    float loopClosureFrequency;
     int   surroundingKeyframeSize;
     float historyKeyframeSearchRadius;
     float historyKeyframeSearchTimeDiff;
@@ -141,6 +154,11 @@ public:
         nh.param<std::string>("lio_sam/odomTopic", odomTopic, "odometry/imu");
         nh.param<std::string>("lio_sam/gpsTopic", gpsTopic, "odometry/gps");
 
+        nh.param<std::string>("lio_sam/lidarFrame", lidarFrame, "base_link");
+        nh.param<std::string>("lio_sam/baselinkFrame", baselinkFrame, "base_link");
+        nh.param<std::string>("lio_sam/odometryFrame", odometryFrame, "odom");
+        nh.param<std::string>("lio_sam/mapFrame", mapFrame, "map");
+
         nh.param<bool>("lio_sam/useImuHeadingInitialization", useImuHeadingInitialization, false);
         nh.param<bool>("lio_sam/useGpsElevation", useGpsElevation, false);
         nh.param<float>("lio_sam/gpsCovThreshold", gpsCovThreshold, 2.0);
@@ -151,6 +169,8 @@ public:
 
         nh.param<int>("lio_sam/N_SCAN", N_SCAN, 16);
         nh.param<int>("lio_sam/Horizon_SCAN", Horizon_SCAN, 1800);
+        nh.param<std::string>("lio_sam/timeField", timeField, "time");
+        nh.param<int>("lio_sam/downsampleRate", downsampleRate, 1);
 
         nh.param<float>("lio_sam/imuAccNoise", imuAccNoise, 0.01);
         nh.param<float>("lio_sam/imuGyrNoise", imuGyrNoise, 0.001);
@@ -186,6 +206,7 @@ public:
         nh.param<float>("lio_sam/surroundingKeyframeSearchRadius", surroundingKeyframeSearchRadius, 50.0);
 
         nh.param<bool>("lio_sam/loopClosureEnableFlag", loopClosureEnableFlag, false);
+        nh.param<float>("lio_sam/loopClosureFrequency", loopClosureFrequency, 1.0);
         nh.param<int>("lio_sam/surroundingKeyframeSize", surroundingKeyframeSize, 50);
         nh.param<float>("lio_sam/historyKeyframeSearchRadius", historyKeyframeSearchRadius, 10.0);
         nh.param<float>("lio_sam/historyKeyframeSearchTimeDiff", historyKeyframeSearchTimeDiff, 30.0);
